@@ -1,89 +1,93 @@
 # Importing necessary libraries
-from abc import ABC, abstractmethod  # For implementing the template design pattern
-import matplotlib.pyplot as plt  # For visualization
-import pandas as pd  # For handling dataframes
-import seaborn as sns  # For enhanced statistical visualizations
+from abc import ABC, abstractmethod
+import matplotlib.pyplot as plt
+import pandas as pd
+import seaborn as sns
+from sklearn.preprocessing import LabelEncoder
 
 class MultivariateStatisticalAnalysisTemplate(ABC):
     """
-    An abstract base class (ABC) that defines a template for performing 
-    multivariate statistical analysis on a dataset.
+    Abstract base class for performing multivariate statistical analysis.
     """
 
     def render(self, df: pd.DataFrame) -> None:
         """
         Calls methods for heatmap correlation analysis and pairplot feature analysis.
-
-        :param df: pd.DataFrame - The dataset to analyze.
-        :return: None
         """
         self.heatmap_correlation_analysis(df)
         self.pairplot_feature_analysis(df)
 
     @abstractmethod
     def heatmap_correlation_analysis(self, df: pd.DataFrame) -> None:
-        """
-        Abstract method for generating a heatmap to analyze feature correlations.
-
-        :param df: pd.DataFrame - The dataset to analyze.
-        :return: None
-        """
         pass
 
     @abstractmethod
     def pairplot_feature_analysis(self, df: pd.DataFrame) -> None:
-        """
-        Abstract method for generating pairplots to visualize relationships between features.
-
-        :param df: pd.DataFrame - The dataset to analyze.
-        :return: None
-        """
         pass
 
 
 class SimpleMultivariateStatisticalAnalysis(MultivariateStatisticalAnalysisTemplate):
     """
-    A concrete implementation of multivariate statistical analysis 
-    using heatmaps and pairplots.
+    Concrete implementation of multivariate analysis with support for
+    both numeric and categorical features.
     """
 
     def heatmap_correlation_analysis(self, df: pd.DataFrame) -> None:
         """
-        Generates a correlation heatmap for numerical features.
-
-        :param df: pd.DataFrame - The dataset to analyze.
-        :return: None
+        Generates a hybrid correlation heatmap:
+        - Numeric features use Pearson correlation.
+        - Categorical features are label-encoded for visualization.
         """
         if df.empty:
             print("Dataset is empty. No heatmap can be generated.")
             return
 
-        numeric_df = df.select_dtypes(include=['number'])  # Select only numerical columns
-        if numeric_df.shape[1] < 2:
-            print("Not enough numerical features for correlation analysis.")
+        df_copy = df.copy()
+        # Encode categorical features for correlation visualization
+        for col in df_copy.select_dtypes(include=['object', 'category']).columns:
+            df_copy[col] = LabelEncoder().fit_transform(df_copy[col].astype(str))
+
+        corr_matrix = df_copy.corr(numeric_only=True)
+
+        if corr_matrix.empty:
+            print("No valid features for correlation heatmap.")
             return
 
         plt.figure(figsize=(12, 10))
-        sns.heatmap(numeric_df.corr(), annot=True, fmt=".2f", cmap="coolwarm", linewidths=0.5)
-        plt.title("Feature Correlation Heatmap")
+        sns.heatmap(corr_matrix, annot=True, fmt=".2f", cmap="coolwarm", linewidths=0.5)
+        plt.title("Hybrid Feature Correlation Heatmap (Numeric + Encoded Categorical)")
         plt.show()
 
     def pairplot_feature_analysis(self, df: pd.DataFrame) -> None:
         """
-        Generates a pairplot to visualize relationships between features.
-
-        :param df: pd.DataFrame - The dataset to analyze.
-        :return: None
+        Generates hybrid pairwise plots:
+        - Pairplot for numeric-numeric relationships.
+        - Boxplots/stripplots for categorical-numeric relationships.
         """
         if df.empty:
-            print("Dataset is empty. No pairplot can be generated.")
+            print("Dataset is empty. No plots can be generated.")
             return
 
-        numeric_df = df.select_dtypes(include=['number'])  # Select only numerical columns
-        if numeric_df.shape[1] < 2:
-            print("Not enough numerical features for pairplot analysis.")
+        numeric_cols = df.select_dtypes(include=['number']).columns
+        categorical_cols = df.select_dtypes(include=['object', 'category']).columns
+
+        if len(numeric_cols) < 1 and len(categorical_cols) < 1:
+            print("No valid features for pairplot analysis.")
             return
 
-        sns.pairplot(numeric_df)
-        plt.suptitle("Pairwise Feature Relationship Plot", y=1.02)
-        plt.show()
+        # 1️⃣ Pairplot for numeric features
+        if len(numeric_cols) > 1:
+            sns.pairplot(df[numeric_cols])
+            plt.suptitle("Pairwise Relationships (Numeric Features)", y=1.02)
+            plt.show()
+
+        # 2️⃣ Boxplots/stripplots for categorical–numeric combinations
+        for cat_col in categorical_cols:
+            for num_col in numeric_cols:
+                plt.figure(figsize=(10, 5))
+                sns.boxplot(x=cat_col, y=num_col, data=df)
+                sns.stripplot(x=cat_col, y=num_col, data=df, color='black', size=3, jitter=True, alpha=0.6)
+                plt.title(f"{num_col} distribution across {cat_col}")
+                plt.xticks(rotation=45)
+                plt.tight_layout()
+                plt.show()
