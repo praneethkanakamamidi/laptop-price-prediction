@@ -1,0 +1,13 @@
+version: '3.9'
+
+services:
+  streamlit-app:
+    build: .
+    container_name: laptop_price_app
+    ports:
+      - "8501:8501"
+    volumes:
+      - .:/app
+    environment:
+      - STREAMLIT_SERVER_HEADLESS=true
+      - STREAMLIT_SERVER_PORT=8501
