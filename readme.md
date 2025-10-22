@@ -87,13 +87,15 @@ docker-compose down
 
 ## Results and Visualizations
 
-The processed data and analysis visualizations are available below:
 
-### Feature Distributions & Correlation Overview
 ![Feature distributions & correlation overview](output/output-1.png)
 
-### Univariate & Bivariate Analysis Visualizations
+---
+
 ![Univariate & Bivariate Analysis](output/output-2.png)
 
-### Multivariate Patterns & Model Insights
+---
+
 ![Multivariate Patterns & Model Insights](output/output-3.png)
+
+---
