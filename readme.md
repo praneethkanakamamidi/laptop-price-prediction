@@ -85,7 +85,7 @@ docker exec -it <container_name> /bin/bash
 docker-compose down
 ```
 
-## Results and Visualizations
+## Results
 
 
 ![Feature distributions & correlation overview](output/output-1.png)
